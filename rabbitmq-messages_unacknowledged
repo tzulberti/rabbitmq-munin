@@ -34,35 +34,38 @@ VHOSTS=${vhost:-"/"}
 if [ "$1" = "config" ]; then
     QUEUE_WARN=${queue_warn:-10000}
     QUEUE_CRIT=${queue_crit:-20000}
+    
+    # The host name this plugin is for. (Can be overridden to have
+    # one machine answer for several)
+
+    # The title of the graph
+    echo "graph_title RabbitMQ $VHOST Unacknowledged Messages"
+    # Arguments to "rrdtool graph". In this case, tell it that the
+    # lower limit of the graph is '0', and that 1k=1000 (not 1024)
+    echo 'graph_args --base 1000 -l 0'
+    # The Y-axis label
+    echo 'graph_vlabel unacknowledged'
+    # We want Cur/Min/Avg/Max unscaled (i.e. 0.42 load instead of
+    # 420 milliload)
+    #echo 'graph_scale no'
+    echo 'graph_category RabbitMQ'
+    echo 'graph_info Lists how many messages are in each queue.'
 
     for VHOST in $VHOSTS
     do
+        VHOST_NAME=${VHOST#\/}
         QUEUES=$(rabbitmqctl list_queues -p $VHOST name | \
             grep -v '^Listing' | \
             grep -v 'done\.$' | sed -e 's/[.-=]/_/g' )
-        # The host name this plugin is for. (Can be overridden to have
-        # one machine answer for several)
 
-        # The title of the graph
-        echo "graph_title RabbitMQ $VHOST Unacknowledged Messages"
-        # Arguments to "rrdtool graph". In this case, tell it that the
-        # lower limit of the graph is '0', and that 1k=1000 (not 1024)
-        echo 'graph_args --base 1000 -l 0'
-        # The Y-axis label
-        echo 'graph_vlabel unacknowledged'
-        # We want Cur/Min/Avg/Max unscaled (i.e. 0.42 load instead of
-        # 420 milliload)
-        #echo 'graph_scale no'
-        echo 'graph_category RabbitMQ'
-
-        for queue in $QUEUES; do
-            echo "$queue.label $queue"
-            echo "$queue.warning $QUEUE_WARN"
-            echo "$queue.critical $QUEUE_CRIT"
-            echo "$queue.info Unacknowledged messages for $queue"
+        for queue in $QUEUES
+        do
+            echo "$VHOST_NAME.$queue.label $queue"
+            echo "$VHOST_NAME.$queue.warning $QUEUE_WARN"
+            echo "$VHOST_NAME.$queue.critical $QUEUE_CRIT"
+            echo "$VHOST_NAME.$queue.info Unacknowledged messages for $queue"
         done
 
-        echo 'graph_info Lists how many messages are in each queue.'
     done
 
     # Last, if run with the "config"-parameter, quit here (don't
@@ -75,7 +78,8 @@ fi
 # "value" subfield for every data field.
 for VHOST in $VHOSTS
 do
+    VHOST_NAME=${VHOST#\/}
     rabbitmqctl list_queues -p $VHOST name messages_unacknowledged | \
         grep -v "^Listing" | grep -v "done.$" | \
-        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("$q.value $s")'
+        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'.$q.value $s")'
 done

@@ -34,8 +34,8 @@ VHOSTS=${vhost:-"/"}
 if [ "$1" = "config" ]; then
     QUEUE_WARN=${queue_warn:-100}
     QUEUE_CRIT=${queue_crit:-500}
-    
-    
+
+
     # The host name this plugin is for. (Can be overridden to have
     # one machine answer for several)
 
@@ -54,12 +54,13 @@ if [ "$1" = "config" ]; then
 
     for VHOST in $VHOSTS
     do
-        VHOST_NAME=${VHOST/\/}
+        VHOST_NAME=${VHOST#\/}
         QUEUES=$(rabbitmqctl list_queues -p $VHOST name | \
             grep -v '^Listing' | \
             grep -v 'done\.$' | sed -e 's/[.-=]/_/g' )
-    
-        for queue in $QUEUES; do
+
+        for queue in $QUEUES
+        do
             echo "$VHOST_NAME.$queue.label $queue"
             echo "$VHOST_NAME.$queue.warning $QUEUE_WARN"
             echo "$VHOST_NAME.$queue.critical $QUEUE_CRIT"
@@ -76,11 +77,11 @@ fi
 
 for VHOST in $VHOSTS
 do
-    VHOST_NAME=${VHOST/\/}
+    VHOST_NAME=${VHOST#\/}
     # If not run with any parameters at all (or only unknown ones), do the
     # real work - i.e. display the data. Almost always this will be
     # "value" subfield for every data field.
     rabbitmqctl list_queues -p $VHOST name consumers| \
         grep -v "^Listing" | grep -v "done.$" | \
-        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("$VHOST_NAME.$q.value $s")'
+        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'.$q.value $s")'
 done
