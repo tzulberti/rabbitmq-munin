@@ -21,54 +21,62 @@
 # always be included.
 
 if [ "$1" = "autoconf" ]; then
-	echo yes
-	exit 0
+    echo yes
+    exit 0
 fi
 
 # If run with the "config"-parameter, give out information on how the
 # graphs should look. 
 
-VHOST=${vhost:-"/"}
-QUEUES=$(rabbitmqctl list_queues -p $VHOST name | \
-		grep -v '^Listing' | \
-		grep -v 'done\.$' | sed -e 's/[.-=]/_/g' )
- 
+VHOSTS=${vhost:-"/"}
+
+
 if [ "$1" = "config" ]; then
-        QUEUE_WARN=${queue_warn:-10000}
-        QUEUE_CRIT=${queue_crit:-20000}
+    QUEUE_WARN=${queue_warn:-10000}
+    QUEUE_CRIT=${queue_crit:-20000}
 
-	# The host name this plugin is for. (Can be overridden to have
-	# one machine answer for several)
+    for VHOST in $VHOSTS
+    do
+        QUEUES=$(rabbitmqctl list_queues -p $VHOST name | \
+            grep -v '^Listing' | \
+            grep -v 'done\.$' | sed -e 's/[.-=]/_/g' )
 
-	# The title of the graph
-	echo "graph_title RabbitMQ $VHOST Uncommitted Messages"
-	# Arguments to "rrdtool graph". In this case, tell it that the
-	# lower limit of the graph is '0', and that 1k=1000 (not 1024)
-	echo 'graph_args --base 1000 -l 0'
-	# The Y-axis label
-	echo 'graph_vlabel uncommitted'
-	# We want Cur/Min/Avg/Max unscaled (i.e. 0.42 load instead of
-	# 420 milliload)
-	#echo 'graph_scale no'
-	echo 'graph_category RabbitMQ'
+        # The host name this plugin is for. (Can be overridden to have
+        # one machine answer for several)
 
-	for queue in $QUEUES; do
-		echo "$queue.label $queue"
-		echo "$queue.warning $QUEUE_WARN"
-		echo "$queue.critical $QUEUE_CRIT"
-		echo "$queue.info Uncommitted messages for $queue"
-	done
+        # The title of the graph
+        echo "graph_title RabbitMQ $VHOST Uncommitted Messages"
+        # Arguments to "rrdtool graph". In this case, tell it that the
+        # lower limit of the graph is '0', and that 1k=1000 (not 1024)
+        echo 'graph_args --base 1000 -l 0'
+        # The Y-axis label
+        echo 'graph_vlabel uncommitted'
+        # We want Cur/Min/Avg/Max unscaled (i.e. 0.42 load instead of
+        # 420 milliload)
+        #echo 'graph_scale no'
+        echo 'graph_category RabbitMQ'
 
-	echo 'graph_info Lists how many messages are in each queue.'
-	# Last, if run with the "config"-parameter, quit here (don't
-	# display any data)
-	exit 0
+        for queue in $QUEUES; do
+            echo "$queue.label $queue"
+            echo "$queue.warning $QUEUE_WARN"
+            echo "$queue.critical $QUEUE_CRIT"
+            echo "$queue.info Uncommitted messages for $queue"
+        done
+
+        echo 'graph_info Lists how many messages are in each queue.'
+        # Last, if run with the "config"-parameter, quit here (don't
+        # display any data)
+        exit 0
+    done
 fi
 
 # If not run with any parameters at all (or only unknown ones), do the
 # real work - i.e. display the data. Almost always this will be
 # "value" subfield for every data field.
 
-rabbitmqctl list_queues -p $VHOST name messages_uncommitted | \
-	grep -v "^Listing" | grep -v "done.$" | \
-    perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("$q.value $s")'
+for VHOST in $VHOSTS
+do
+    rabbitmqctl list_queues -p $VHOST name messages_uncommitted | \
+        grep -v "^Listing" | grep -v "done.$" | \
+        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("$q.value $s")'
+done
