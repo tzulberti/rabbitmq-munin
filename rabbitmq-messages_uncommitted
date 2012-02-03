@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # Plugin to monitor the queues of a virtual_host in RabbitMQ
 #
 # Usage: Link or copy into /etc/munin/node.d/
@@ -26,7 +26,7 @@ if [ "$1" = "autoconf" ]; then
 fi
 
 # If run with the "config"-parameter, give out information on how the
-# graphs should look. 
+# graphs should look.
 
 VHOSTS=${vhost:-"/"}
 
@@ -64,10 +64,11 @@ if [ "$1" = "config" ]; then
         done
 
         echo 'graph_info Lists how many messages are in each queue.'
-        # Last, if run with the "config"-parameter, quit here (don't
-        # display any data)
-        exit 0
     done
+
+    # Last, if run with the "config"-parameter, quit here (don't
+    # display any data)
+    exit 0
 fi
 
 # If not run with any parameters at all (or only unknown ones), do the
