@@ -61,10 +61,10 @@ if [ "$1" = "config" ]; then
 
         for queue in $QUEUES
         do
-            echo "$VHOST_NAME.$queue.label $queue"
-            echo "$VHOST_NAME.$queue.warning $QUEUE_WARN"
-            echo "$VHOST_NAME.$queue.critical $QUEUE_CRIT"
-            echo "$VHOST_NAME.$queue.info Active consumers for $queue"
+            echo "$VHOST_NAME-$queue.label $queue"
+            echo "$VHOST_NAME-$queue.warning $QUEUE_WARN"
+            echo "$VHOST_NAME-$queue.critical $QUEUE_CRIT"
+            echo "$VHOST_NAME-$queue.info Active consumers for $queue"
         done
 
     done
@@ -83,5 +83,5 @@ do
     # "value" subfield for every data field.
     rabbitmqctl list_queues -p $VHOST name consumers| \
         grep -v "^Listing" | grep -v "done.$" | \
-        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'.$q.value $s")'
+        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'-$q.value $s")'
 done

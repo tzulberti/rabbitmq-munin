@@ -33,7 +33,7 @@ VHOSTS=${vhost:-"/"}
 if [ "$1" = "config" ]; then
     QUEUE_WARN=${queue_warn:-10000}
     QUEUE_CRIT=${queue_crit:-20000}
-    
+
     # The host name this plugin is for. (Can be overridden to have
     # one machine answer for several)
 
@@ -60,10 +60,10 @@ if [ "$1" = "config" ]; then
 
         for queue in $QUEUES
         do
-            echo "$VHOST_NAME.$queue.label $queue"
-            echo "$VHOST_NAME.$queue.warning $QUEUE_WARN"
-            echo "$VHOST_NAME.$queue.critical $QUEUE_CRIT"
-            echo "$VHOST_NAME.$queue.info Memory used by $queue"
+            echo "$VHOST_NAME-$queue.label $queue"
+            echo "$VHOST_NAME-$queue.warning $QUEUE_WARN"
+            echo "$VHOST_NAME-$queue.critical $QUEUE_CRIT"
+            echo "$VHOST_NAME-$queue.info Memory used by $queue"
         done
 
     done;
@@ -81,5 +81,5 @@ do
     VHOST_NAME=${VHOST#\/}
     rabbitmqctl list_queues -p $VHOST name memory | \
         grep -v "^Listing" | grep -v "done.$" | \
-        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'.$q.value $s")'
+        perl -nle'($q, $s) = split; $q =~ s/[.-=]/_/g; print("'$VHOST_NAME'-$q.value $s")'
 done
